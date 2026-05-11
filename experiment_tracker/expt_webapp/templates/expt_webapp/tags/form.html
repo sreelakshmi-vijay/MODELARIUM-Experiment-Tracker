@@ -1,0 +1,35 @@
+{% extends "expt_webapp/base.html" %}
+{% block title %}{% if tag %}Edit {{ tag.name }}{% else %}New Tag{% endif %} · ExptTracker{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+  <a href="{% url 'tag-list' %}">Tags</a>
+  {% if tag %}<span>/</span><a href="{% url 'tag-detail' tag.id %}">{{ tag.name }}</a>{% endif %}
+  <span>/</span><span style="color:var(--text);">{% if tag %}Edit{% else %}New{% endif %}</span>
+</div>
+<div class="page-header">
+  <div class="page-title">{% if tag %}Edit Tag{% else %}New Tag{% endif %}</div>
+</div>
+<div style="padding:32px;">
+  <div class="card" style="max-width:400px;">
+    <form method="post" style="padding:28px; display:flex; flex-direction:column; gap:20px;">
+      {% csrf_token %}
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Name *</label>
+        <input type="text" name="name" value="{{ tag.name|default:'' }}" class="input" required placeholder="e.g. production">
+      </div>
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Color</label>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <input type="color" name="color" value="{{ tag.color|default:'#c8ff00' }}" style="width:44px; height:36px; border:1px solid var(--border); background:transparent; cursor:pointer; border-radius:3px; padding:2px;">
+          <span style="font-family:'Space Mono',monospace; font-size:11px; color:var(--muted);">Pick a colour for this tag</span>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; padding-top:8px; border-top:1px solid var(--border);">
+        <button type="submit" class="btn btn-primary">{% if tag %}Save Changes{% else %}Create Tag{% endif %}</button>
+        {% if tag %}<a href="{% url 'tag-detail' tag.id %}" class="btn btn-ghost">Cancel</a>
+        {% else %}<a href="{% url 'tag-list' %}" class="btn btn-ghost">Cancel</a>{% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

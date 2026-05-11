@@ -1,0 +1,45 @@
+{% extends "expt_webapp/base.html" %}
+{% block title %}{% if material_type %}Edit {{ material_type.name }}{% else %}New Material Type{% endif %} · Modelarium{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{% url 'material-list' %}">Materials</a>
+  <span>/</span>
+  <a href="{% url 'material-type-list' %}">Types</a>
+  {% if material_type %}<span>/</span><a href="{% url 'material-type-detail' material_type.id %}">{{ material_type.name }}</a>{% endif %}
+  <span>/</span>
+  <span style="color:var(--text);">{% if material_type %}Edit{% else %}New{% endif %}</span>
+</div>
+
+<div class="page-header">
+  <div class="page-title">{% if material_type %}Edit Material Type{% else %}New Material Type{% endif %}</div>
+  <div class="page-sub">{% if material_type %}Update type details{% else %}Define a new category for materials{% endif %}</div>
+</div>
+
+<div style="padding:32px;">
+  <div class="card" style="max-width:520px;">
+    <form method="post" style="padding:28px; display:flex; flex-direction:column; gap:20px;">
+      {% csrf_token %}
+
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Name *</label>
+        <input type="text" name="name" value="{{ material_type.name|default:'' }}" class="input" required placeholder="e.g. Dataset, Script, Config">
+      </div>
+
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Description</label>
+        <textarea name="description" class="input" rows="3" placeholder="What kind of materials belong to this type?">{{ material_type.description|default:'' }}</textarea>
+      </div>
+
+      <div style="display:flex; gap:10px; padding-top:8px; border-top:1px solid var(--border);">
+        <button type="submit" class="btn btn-primary">{% if material_type %}Save Changes{% else %}Create Type{% endif %}</button>
+        {% if material_type %}
+          <a href="{% url 'material-type-detail' material_type.id %}" class="btn btn-ghost">Cancel</a>
+        {% else %}
+          <a href="{% url 'material-type-list' %}" class="btn btn-ghost">Cancel</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

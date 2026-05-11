@@ -1,0 +1,83 @@
+{% extends "expt_webapp/base.html" %}
+{% block title %}{% if run %}Edit Run{% else %}New Run{% endif %} · ExptTracker{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{% url 'run-list' %}">Runs</a>
+  {% if run %}<span>/</span><a href="{% url 'run-detail' run.id %}">{{ run.name|default:run.id }}</a>{% endif %}
+  <span>/</span>
+  <span style="color:var(--text);">{% if run %}Edit{% else %}New{% endif %}</span>
+</div>
+
+<div class="page-header">
+  <div class="page-title">{% if run %}Edit Run{% else %}New Run{% endif %}</div>
+  <div class="page-sub">{% if run %}Update run details{% else %}Start a new experiment run{% endif %}</div>
+</div>
+
+<div style="padding:32px;">
+  <div class="card" style="max-width:560px;">
+    <form method="post" style="padding:28px; display:flex; flex-direction:column; gap:20px;">
+      {% csrf_token %}
+
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Experiment *</label>
+        <select name="experiment" class="input" required>
+          <option value="">— Select experiment —</option>
+          {% for e in all_experiments %}
+            <option value="{{ e.id }}" {% if run.experiment_id == e.id or request.GET.experiment == e.id|stringformat:"s" %}selected{% endif %}>{{ e.name }} ({{ e.model.name }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Setup *</label>
+        <select name="setup" class="input" required>
+          <option value="">— Select setup —</option>
+          {% for s in all_setups %}
+            <option value="{{ s.id }}" {% if run.setup_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Name</label>
+        <input type="text" name="name" value="{{ run.name|default:'' }}" class="input" placeholder="Optional run name">
+      </div>
+
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Status *</label>
+        <select name="status" class="input" required>
+          {% for s in statuses %}
+            <option value="{{ s }}" {% if run.status == s %}selected{% elif not run and s == 'pending' %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Started At</label>
+          <input type="datetime-local" name="started_at" value="{{ run.started_at|date:'Y-m-d\TH:i'|default:'' }}" class="input">
+        </div>
+        <div>
+          <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Finished At</label>
+          <input type="datetime-local" name="finished_at" value="{{ run.finished_at|date:'Y-m-d\TH:i'|default:'' }}" class="input">
+        </div>
+      </div>
+
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Notes</label>
+        <textarea name="notes" class="input" rows="3" placeholder="Any notes about this run…">{{ run.notes|default:'' }}</textarea>
+      </div>
+
+      <div style="display:flex; gap:10px; padding-top:8px; border-top:1px solid var(--border);">
+        <button type="submit" class="btn btn-primary">{% if run %}Save Changes{% else %}Create Run{% endif %}</button>
+        {% if run %}
+          <a href="{% url 'run-detail' run.id %}" class="btn btn-ghost">Cancel</a>
+        {% else %}
+          <a href="{% url 'run-list' %}" class="btn btn-ghost">Cancel</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

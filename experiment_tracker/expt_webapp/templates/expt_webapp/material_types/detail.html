@@ -1,0 +1,59 @@
+{% extends "expt_webapp/base.html" %}
+{% block title %}{{ material_type.name }} · Material Types · Modelarium{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{% url 'material-list' %}">Materials</a>
+  <span>/</span>
+  <a href="{% url 'material-type-list' %}">Types</a>
+  <span>/</span>
+  <span style="color:var(--text);">{{ material_type.name }}</span>
+</div>
+
+<div class="page-header">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div>
+      <div class="page-title">{{ material_type.name }}</div>
+      <div class="page-sub">{{ material_type.description|default:"No description" }}</div>
+    </div>
+    <div style="display:flex; gap:8px; padding-bottom:20px;">
+      <a href="{% url 'material-type-edit' material_type.id %}" class="btn btn-ghost">Edit</a>
+      <a href="{% url 'material-create' %}" class="btn btn-primary">+ New Material</a>
+    </div>
+  </div>
+</div>
+
+<div style="padding:24px 32px;">
+  <div class="card">
+    <div style="padding:14px 18px; border-bottom:1px solid var(--border); font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted);">
+      Materials of this type ({{ materials.count }})
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Version</th>
+          <th>Description</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in materials %}
+        <tr>
+          <td><a href="{% url 'material-detail' m.id %}" style="color:var(--text); font-weight:500; text-decoration:none;">{{ m.name }}</a></td>
+          <td style="font-family:'Space Mono',monospace; font-size:12px; color:var(--muted);">{{ m.version }}</td>
+          <td style="color:var(--muted); font-size:13px;">{{ m.description|default:"—"|truncatechars:50 }}</td>
+          <td style="color:var(--muted); font-size:12px; font-family:'Space Mono',monospace;">{{ m.created_at|date:"M d, Y" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4">
+            <div class="empty-state" style="padding:30px;">No materials of this type yet.</div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

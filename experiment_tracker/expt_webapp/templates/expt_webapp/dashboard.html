@@ -1,0 +1,131 @@
+{% extends "expt_webapp/base.html" %}
+
+{% block title %}Dashboard · Modelarium{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Dashboard</div>
+  <div class="page-sub">System-wide overview</div>
+</div>
+
+<!-- Stats row -->
+<div class="card fade-in" style="margin:24px 32px 0; display:flex; border-radius:4px; overflow:hidden;">
+  <div class="stat-block">
+    <div class="stat-value">{{ stats.total_models }}</div>
+    <div class="stat-label">Models</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-value">{{ stats.total_experiments }}</div>
+    <div class="stat-label">Experiments</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-value">{{ stats.total_runs }}</div>
+    <div class="stat-label">Total Runs</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-value" style="color:var(--accent);">{{ stats.active_runs }}</div>
+    <div class="stat-label">Active Now</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-value" style="color:#6dc86d;">{% if stats.success_rate %}{{ stats.success_rate }}%{% else %}—{% endif %}</div>
+    <div class="stat-label">Success Rate</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-value" style="color:var(--danger);">{{ stats.failed_runs }}</div>
+    <div class="stat-label">Failed</div>
+  </div>
+</div>
+
+<!-- Content grid -->
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; padding:20px 32px 32px;">
+
+  <!-- Recent Models -->
+  <div class="card fade-in" style="animation-delay:0.05s;">
+    <div style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+      <span class="mono" style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted);">Recent Models</span>
+      <a href="{% url 'model-list' %}" class="btn btn-ghost" style="padding:4px 10px; font-size:10px;">View all</a>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>Name</th><th>Version</th><th>Created</th></tr></thead>
+      <tbody>
+        {% for m in recent_models %}
+        <tr>
+          <td><a href="{% url 'model-detail' m.id %}" style="color:var(--text); text-decoration:none;">{{ m.name }}</a></td>
+          <td><span class="badge badge-info">{{ m.version }}</span></td>
+          <td style="color:var(--muted); font-size:12px;">{{ m.created_at|date:"M d, Y" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="empty-state" style="padding:30px;">No models yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Recent Experiments -->
+  <div class="card fade-in" style="animation-delay:0.1s;">
+    <div style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+      <span class="mono" style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted);">Recent Experiments</span>
+      <a href="{% url 'experiment-list' %}" class="btn btn-ghost" style="padding:4px 10px; font-size:10px;">View all</a>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>Name</th><th>Model</th><th>Created</th></tr></thead>
+      <tbody>
+        {% for e in recent_experiments %}
+        <tr>
+          <td><a href="{% url 'experiment-detail' e.id %}" style="color:var(--text); text-decoration:none;">{{ e.name }}</a></td>
+          <td style="color:var(--muted); font-size:12px;">{{ e.model.name }}</td>
+          <td style="color:var(--muted); font-size:12px;">{{ e.created_at|date:"M d, Y" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="empty-state" style="padding:30px;">No experiments yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Active Runs -->
+  <div class="card fade-in" style="animation-delay:0.15s;">
+    <div style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+      <span class="mono" style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted);">Active Runs</span>
+      <a href="{% url 'run-list' %}?status=running" class="btn btn-ghost" style="padding:4px 10px; font-size:10px;">View all</a>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>Run</th><th>Experiment</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for r in active_runs %}
+        <tr>
+          <td><a href="{% url 'run-detail' r.id %}" style="color:var(--text); text-decoration:none;">{{ r.name|default:r.id }}</a></td>
+          <td style="color:var(--muted); font-size:12px;">{{ r.experiment.name }}</td>
+          <td><span class="badge badge-{{ r.status }}">{{ r.status }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="empty-state" style="padding:30px;">No active runs</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Recent Failures -->
+  <div class="card fade-in" style="animation-delay:0.2s;">
+    <div style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+      <span class="mono" style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted);">Recent Failures</span>
+      <a href="{% url 'run-list' %}?status=failed" class="btn btn-ghost" style="padding:4px 10px; font-size:10px;">View all</a>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>Run</th><th>Experiment</th><th>Ended</th></tr></thead>
+      <tbody>
+        {% for r in recent_failures %}
+        <tr>
+          <td><a href="{% url 'run-detail' r.id %}" style="color:var(--danger); text-decoration:none;">{{ r.name|default:r.id }}</a></td>
+          <td style="color:var(--muted); font-size:12px;">{{ r.experiment.name }}</td>
+          <td style="color:var(--muted); font-size:12px;">{{ r.finished_at|date:"M d, H:i"|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="empty-state" style="padding:30px;">No failures 🎉</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}

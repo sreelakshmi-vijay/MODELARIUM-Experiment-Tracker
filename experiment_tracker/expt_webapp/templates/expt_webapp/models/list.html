@@ -1,0 +1,67 @@
+{% extends "expt_webapp/base.html" %}
+{% block title %}Models · Modelarium{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div>
+      <div class="page-title">Models</div>
+      <div class="page-sub">{{ models|length }} model{{ models|length|pluralize }} registered</div>
+    </div>
+    <div style="padding-bottom:20px;">
+      <a href="{% url 'model-create' %}" class="btn btn-primary">+ New Model</a>
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div style="padding:16px 32px; border-bottom:1px solid var(--border); display:flex; gap:12px;">
+  <form method="get" style="display:flex; gap:10px; flex:1;">
+    <input type="text" name="name" value="{{ request.GET.name }}" placeholder="Search by name…" class="input" style="max-width:260px;">
+    <input type="text" name="version" value="{{ request.GET.version }}" placeholder="Version…" class="input" style="max-width:120px;">
+    <button type="submit" class="btn btn-ghost">Filter</button>
+    {% if request.GET.name or request.GET.version %}
+      <a href="{% url 'model-list' %}" class="btn btn-ghost" style="color:var(--danger);">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<div style="padding:24px 32px;">
+  <div class="card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Version</th>
+          <th>Description</th>
+          <th>Parent</th>
+          <th>Created</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in models %}
+        <tr class="fade-in">
+          <td>
+            <a href="{% url 'model-detail' m.id %}" style="color:var(--text); text-decoration:none; font-weight:500;">{{ m.name }}</a>
+          </td>
+          <td><span class="badge badge-info">{{ m.version }}</span></td>
+          <td style="color:var(--muted); max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+            {{ m.description|default:"—" }}
+          </td>
+          <td style="color:var(--muted); font-size:12px;">
+            {% if m.parent_model %}<a href="{% url 'model-detail' m.parent_model.id %}" style="color:var(--slate);">{{ m.parent_model.name }}</a>{% else %}—{% endif %}
+          </td>
+          <td style="color:var(--muted); font-size:12px; font-family:'Space Mono',monospace;">{{ m.created_at|date:"Y-m-d" }}</td>
+          <td style="text-align:right;">
+            <a href="{% url 'model-detail' m.id %}" class="btn btn-ghost" style="padding:4px 10px; font-size:10px;">View →</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6"><div class="empty-state">No models found. <a href="{% url 'model-create' %}" style="color:var(--accent);">Create one →</a></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

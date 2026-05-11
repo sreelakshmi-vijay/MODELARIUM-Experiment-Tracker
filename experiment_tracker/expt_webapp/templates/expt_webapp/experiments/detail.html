@@ -1,0 +1,214 @@
+{% extends "expt_webapp/base.html" %}
+{% block title %}{{ experiment.name }} · Modelarium{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{% url 'model-list' %}">Models</a>
+  <span>/</span>
+  <a href="{% url 'model-detail' experiment.model.id %}">{{ experiment.model.name }}</a>
+  <span>/</span>
+  <span style="color:var(--text);">{{ experiment.name }}</span>
+</div>
+
+<div class="page-header">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="page-title">{{ experiment.name }}</div>
+        <span class="badge badge-info">{{ experiment.version }}</span>
+        {% if experiment.type %}<span class="badge badge-info">{{ experiment.type }}</span>{% endif %}
+      </div>
+      <div class="page-sub">{{ experiment.description|default:"No description" }}</div>
+    </div>
+    <div style="display:flex; gap:8px; padding-bottom:20px;">
+      <a href="{% url 'experiment-edit' experiment.id %}" class="btn btn-ghost">Edit</a>
+      <a href="{% url 'run-create' %}?experiment={{ experiment.id }}" class="btn btn-primary">+ New Run</a>
+    </div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="card" style="margin:24px 32px 0; display:flex; overflow:hidden;">
+  <div class="stat-block">
+    <div class="stat-value">{{ stats.total_runs }}</div>
+    <div class="stat-label">Total Runs</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-value" style="color:#6dc86d;">{% if stats.success_rate %}{{ stats.success_rate }}%{% else %}—{% endif %}</div>
+    <div class="stat-label">Success Rate</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-value" style="color:var(--accent);">{{ stats.active_runs }}</div>
+    <div class="stat-label">Active</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-value" style="color:var(--danger);">{{ stats.failed_runs }}</div>
+    <div class="stat-label">Failed</div>
+  </div>
+</div>
+
+{% if messages %}
+<div style="padding:16px 32px 0;">
+  {% for msg in messages %}
+  <div style="background:rgba(90,138,96,0.12); border:1px solid var(--success); color:var(--success); padding:10px 14px; border-radius:6px; font-size:13px; margin-bottom:8px;">{{ msg }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div style="padding:24px 32px 0;">
+  <div class="tab-bar" style="padding:0;">
+    <a href="#runs"      class="tab active" onclick="showTab('runs',this)">Runs</a>
+    <a href="#setups"    class="tab"        onclick="showTab('setups',this)">Setups</a>
+    <a href="#materials" class="tab"        onclick="showTab('materials',this)">Materials</a>
+    <a href="#metrics"   class="tab"        onclick="showTab('metrics',this)">Metrics</a>
+  </div>
+
+  <!-- Runs tab -->
+  <div id="tab-runs" style="padding-top:20px;">
+    <div style="display:flex; gap:6px; margin-bottom:12px;">
+      <a href="?status=" class="badge {% if not request.GET.status %}badge-running{% else %}badge-info{% endif %}" style="cursor:pointer; text-decoration:none; padding:5px 12px;">All</a>
+      {% for s in statuses %}
+        <a href="?status={{ s }}" class="badge badge-{{ s }}" style="cursor:pointer; text-decoration:none; padding:5px 12px;">{{ s }}</a>
+      {% endfor %}
+    </div>
+    <div class="card">
+      <table class="data-table">
+        <thead><tr><th>Name</th><th>Status</th><th>Setup</th><th>Started</th><th>Duration</th><th></th></tr></thead>
+        <tbody>
+          {% for r in runs %}
+          <tr>
+            <td><a href="{% url 'run-detail' r.id %}" style="color:var(--text); text-decoration:none; font-weight:500;">{% if r.name %}{{ r.name }}{% else %}Run #{{ r.id }}{% endif %}</a></td>
+            <td><span class="badge badge-{{ r.status }}">{{ r.status }}</span></td>
+            <td style="color:var(--muted); font-size:12px;">{{ r.setup.name }}</td>
+            <td style="color:var(--muted); font-size:12px; font-family:'Space Mono',monospace;">{{ r.started_at|date:"M d, H:i"|default:"—" }}</td>
+            <td style="color:var(--muted); font-size:12px; font-family:'Space Mono',monospace;">{{ r.duration|default:"—" }}</td>
+            <td style="text-align:right;"><a href="{% url 'run-detail' r.id %}" class="btn btn-ghost" style="padding:4px 10px; font-size:10px;">View →</a></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6"><div class="empty-state">No runs yet. <a href="{% url 'run-create' %}?experiment={{ experiment.id }}" style="color:var(--accent);">Start one →</a></div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Setups tab -->
+  <div id="tab-setups" style="display:none; padding-top:20px;">
+    <div class="card">
+      <table class="data-table">
+        <thead><tr><th>Setup</th><th>Description</th><th>Notes</th><th></th></tr></thead>
+        <tbody>
+          {% for es in experiment_setups %}
+          <tr>
+            <td><a href="{% url 'setup-detail' es.setup.id %}" style="color:var(--text); font-weight:500; text-decoration:none;">{{ es.setup.name }}</a></td>
+            <td style="color:var(--muted); font-size:13px;">{{ es.setup.description|default:"—"|truncatechars:60 }}</td>
+            <td style="color:var(--muted); font-size:12px;">{{ es.notes|default:"—" }}</td>
+            <td style="text-align:right;"><a href="{% url 'setup-detail' es.setup.id %}" class="btn btn-ghost" style="padding:4px 10px; font-size:10px;">View →</a></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4"><div class="empty-state">No setups linked. <a href="{% url 'experiment-edit' experiment.id %}" style="color:var(--accent);">Edit experiment →</a></div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Materials tab -->
+  <div id="tab-materials" style="display:none; padding-top:20px;">
+    <div style="display:grid; grid-template-columns:1fr 360px; gap:16px; align-items:start;">
+      <div class="card">
+        <div style="padding:14px 18px; border-bottom:1px solid var(--border); font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted);">Linked Materials</div>
+        <table class="data-table">
+          <thead><tr><th>Material</th><th>Type</th><th>Version</th><th>Role</th><th>Notes</th><th></th></tr></thead>
+          <tbody>
+            {% for em in experiment_materials %}
+            <tr>
+              <td><a href="{% url 'material-detail' em.material.id %}" style="color:var(--text); text-decoration:none; font-weight:500;">{{ em.material.name }}</a></td>
+              <td style="color:var(--muted); font-size:12px;">{{ em.material.material_type.name }}</td>
+              <td><span class="badge badge-info">{{ em.material.version }}</span></td>
+              <td style="color:var(--muted); font-size:12px;">{{ em.role|default:"—" }}</td>
+              <td style="color:var(--muted); font-size:12px;">{{ em.notes|default:"—" }}</td>
+              <td>
+                <form method="post" style="display:inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="remove_material">
+                  <input type="hidden" name="material_id" value="{{ em.material.id }}">
+                  <button type="submit" class="btn btn-ghost" style="padding:3px 8px; font-size:11px; color:var(--danger);" onclick="return confirm('Unlink this material?')">✕</button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6"><div class="empty-state">No materials linked yet</div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card" style="padding:20px;">
+        <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:14px;">Link a Material</div>
+        {% if available_materials %}
+        <form method="post" style="display:flex; flex-direction:column; gap:12px;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="add_material">
+          <div>
+            <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Material *</label>
+            <select name="material_id" class="input" required>
+              <option value="">— Select —</option>
+              {% for mat in available_materials %}
+              <option value="{{ mat.id }}">{{ mat.name }} ({{ mat.material_type.name }}, {{ mat.version }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Role</label>
+            <input type="text" name="role" class="input" placeholder="e.g. training data, config">
+          </div>
+          <div>
+            <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Notes</label>
+            <input type="text" name="notes" class="input" placeholder="Optional notes">
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Link Material</button>
+        </form>
+        {% else %}
+        <div style="color:var(--muted); font-size:13px;">All materials linked. <a href="{% url 'material-create' %}" style="color:var(--accent);">Create new →</a></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Metrics tab (aggregated across runs) -->
+  <div id="tab-metrics" style="display:none; padding-top:20px;">
+    {% if metric_aggregates %}
+    <div class="card">
+      <table class="data-table">
+        <thead><tr><th>Metric</th><th>Avg</th><th>Min</th><th>Max</th></tr></thead>
+        <tbody>
+          {% for m in metric_aggregates %}
+          <tr>
+            <td style="font-family:'Space Mono',monospace; font-size:12px;">{{ m.metric_name }}</td>
+            <td style="font-family:'Space Mono',monospace; font-size:13px; color:var(--accent);">{{ m.avg|floatformat:4 }}</td>
+            <td style="font-family:'Space Mono',monospace; font-size:12px; color:var(--muted);">{{ m.min|floatformat:4 }}</td>
+            <td style="font-family:'Space Mono',monospace; font-size:12px; color:var(--muted);">{{ m.max|floatformat:4 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">No metrics yet — add them from individual run pages.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function showTab(name, el) {
+  event.preventDefault();
+  document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display = 'none');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).style.display = 'block';
+  el.classList.add('active');
+}
+</script>
+{% endblock %}

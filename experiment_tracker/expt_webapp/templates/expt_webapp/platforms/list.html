@@ -1,0 +1,30 @@
+{% extends "expt_webapp/base.html" %}
+{% block title %}Platforms · ExptTracker{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div><div class="page-title">Platforms</div><div class="page-sub">Compute and runtime environments</div></div>
+    <div style="padding-bottom:20px;"><a href="{% url 'platform-create' %}" class="btn btn-primary">+ New Platform</a></div>
+  </div>
+</div>
+<div style="padding:24px 32px;">
+  <div class="card">
+    <table class="data-table">
+      <thead><tr><th>Name</th><th>Description</th><th>Setups</th><th>Created</th><th></th></tr></thead>
+      <tbody>
+        {% for p in platforms %}
+        <tr class="fade-in">
+          <td><a href="{% url 'platform-detail' p.id %}" style="color:var(--text); text-decoration:none; font-weight:500;">{{ p.name }}</a></td>
+          <td style="color:var(--muted); font-size:12px; max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ p.description|default:"—" }}</td>
+          <td style="font-family:'Space Mono',monospace; font-size:12px;">{{ p.setup_count }}</td>
+          <td style="color:var(--muted); font-size:12px; font-family:'Space Mono',monospace;">{{ p.created_at|date:"Y-m-d" }}</td>
+          <td style="text-align:right;"><a href="{% url 'platform-detail' p.id %}" class="btn btn-ghost" style="padding:4px 10px; font-size:10px;">View →</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5"><div class="empty-state">No platforms yet. <a href="{% url 'platform-create' %}" style="color:var(--accent);">Create one →</a></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

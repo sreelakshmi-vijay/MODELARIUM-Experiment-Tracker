@@ -1,0 +1,63 @@
+{% extends "expt_webapp/base.html" %}
+{% block title %}Runs · ExptTracker{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div>
+      <div class="page-title">Runs</div>
+      <div class="page-sub">{{ runs|length }} run{{ runs|length|pluralize }}</div>
+    </div>
+    <div style="padding-bottom:20px;">
+      <a href="{% url 'run-create' %}" class="btn btn-primary">+ New Run</a>
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div style="padding:16px 32px; border-bottom:1px solid var(--border); display:flex; gap:10px; flex-wrap:wrap;">
+  <form method="get" style="display:flex; gap:10px; flex:1; flex-wrap:wrap;">
+    <select name="status" class="input" style="max-width:150px;">
+      <option value="">All Statuses</option>
+      {% for s in statuses %}
+        <option value="{{ s }}" {% if request.GET.status == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <select name="experiment_id" class="input" style="max-width:220px;">
+      <option value="">All Experiments</option>
+      {% for e in all_experiments %}
+        <option value="{{ e.id }}" {% if request.GET.experiment_id == e.id|stringformat:"s" %}selected{% endif %}>{{ e.name }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-ghost">Filter</button>
+    {% if request.GET.status or request.GET.experiment_id %}
+      <a href="{% url 'run-list' %}" class="btn btn-ghost" style="color:var(--danger);">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<div style="padding:24px 32px;">
+  <div class="card">
+    <table class="data-table">
+      <thead>
+        <tr><th>Run</th><th>Experiment</th><th>Status</th><th>Setup</th><th>Started</th><th>Duration</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for r in runs %}
+        <tr class="fade-in">
+          <td><a href="{% url 'run-detail' r.id %}" style="color:var(--text); text-decoration:none; font-weight:500; font-family:'Space Mono',monospace; font-size:12px;">{{ r.name|default:"#"|add:r.id|stringformat:"s" }}</a></td>
+          <td><a href="{% url 'experiment-detail' r.experiment.id %}" style="color:var(--slate); text-decoration:none; font-size:12px;">{{ r.experiment.name }}</a></td>
+          <td><span class="badge badge-{{ r.status }}">{{ r.status }}</span></td>
+          <td style="color:var(--muted); font-size:12px;">{{ r.setup.name }}</td>
+          <td style="color:var(--muted); font-size:12px; font-family:'Space Mono',monospace;">{{ r.started_at|date:"M d, H:i"|default:"—" }}</td>
+          <td style="color:var(--muted); font-size:12px; font-family:'Space Mono',monospace;">{{ r.duration|default:"—" }}</td>
+          <td style="text-align:right;"><a href="{% url 'run-detail' r.id %}" class="btn btn-ghost" style="padding:4px 10px; font-size:10px;">View →</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7"><div class="empty-state">No runs found. <a href="{% url 'run-create' %}" style="color:var(--accent);">Start one →</a></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

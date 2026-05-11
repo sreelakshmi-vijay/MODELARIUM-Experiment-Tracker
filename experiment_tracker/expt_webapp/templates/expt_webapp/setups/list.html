@@ -1,0 +1,31 @@
+{% extends "expt_webapp/base.html" %}
+{% block title %}Setups · ExptTracker{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div><div class="page-title">Setups</div><div class="page-sub">Execution environments and configurations</div></div>
+    <div style="padding-bottom:20px;"><a href="{% url 'setup-create' %}" class="btn btn-primary">+ New Setup</a></div>
+  </div>
+</div>
+<div style="padding:24px 32px;">
+  <div class="card">
+    <table class="data-table">
+      <thead><tr><th>Name</th><th>Description</th><th>Platforms</th><th>Runs</th><th>Created</th><th></th></tr></thead>
+      <tbody>
+        {% for s in setups %}
+        <tr class="fade-in">
+          <td><a href="{% url 'setup-detail' s.id %}" style="color:var(--text); text-decoration:none; font-weight:500;">{{ s.name }}</a></td>
+          <td style="color:var(--muted); font-size:12px; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ s.description|default:"—" }}</td>
+          <td style="font-family:'Space Mono',monospace; font-size:12px;">{{ s.platform_count }}</td>
+          <td style="font-family:'Space Mono',monospace; font-size:12px;">{{ s.run_count }}</td>
+          <td style="color:var(--muted); font-size:12px; font-family:'Space Mono',monospace;">{{ s.created_at|date:"Y-m-d" }}</td>
+          <td style="text-align:right;"><a href="{% url 'setup-detail' s.id %}" class="btn btn-ghost" style="padding:4px 10px; font-size:10px;">View →</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6"><div class="empty-state">No setups yet. <a href="{% url 'setup-create' %}" style="color:var(--accent);">Create one →</a></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "expt_webapp/base.html" %}
+{% block title %}{{ material.name }} · Modelarium{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{% url 'material-list' %}">Materials</a>
+  <span>/</span>
+  <span style="color:var(--text);">{{ material.name }}</span>
+</div>
+
+<div class="page-header">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="page-title">{{ material.name }}</div>
+        <span class="badge badge-info">{{ material.version }}</span>
+        <span class="badge badge-info">{{ material.material_type.name }}</span>
+      </div>
+      <div class="page-sub">
+        {{ material.description|default:"No description" }}
+        {% if material.link %} · <a href="{{ material.link }}" target="_blank" style="color:var(--accent);">↗ External link</a>{% endif %}
+      </div>
+    </div>
+    <div style="padding-bottom:20px;">
+      <a href="{% url 'material-edit' material.id %}" class="btn btn-ghost">Edit</a>
+    </div>
+  </div>
+</div>
+
+<!-- Usage stats -->
+<div class="card" style="margin:24px 32px 0; display:flex; overflow:hidden;">
+  <div class="stat-block">
+    <div class="stat-value">{{ usage.used_in_models }}</div>
+    <div class="stat-label">Models Using</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-value">{{ usage.used_in_experiments }}</div>
+    <div class="stat-label">Experiments Using</div>
+  </div>
+</div>
+
+<div style="padding:24px 32px;">
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+    <div class="card">
+      <div style="padding:14px 18px; border-bottom:1px solid var(--border); font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted);">Used in Models</div>
+      <table class="data-table">
+        <thead><tr><th>Model</th><th>Relation</th></tr></thead>
+        <tbody>
+          {% for mm in model_links %}
+          <tr>
+            <td><a href="{% url 'model-detail' mm.model.id %}" style="color:var(--text); text-decoration:none;">{{ mm.model.name }}</a></td>
+            <td style="color:var(--muted); font-size:12px;">{{ mm.relation_type|default:"—" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="2"><div class="empty-state" style="padding:20px;">Not linked to any models</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div style="padding:14px 18px; border-bottom:1px solid var(--border); font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted);">Used in Experiments</div>
+      <table class="data-table">
+        <thead><tr><th>Experiment</th><th>Role</th></tr></thead>
+        <tbody>
+          {% for em in experiment_links %}
+          <tr>
+            <td><a href="{% url 'experiment-detail' em.experiment.id %}" style="color:var(--text); text-decoration:none;">{{ em.experiment.name }}</a></td>
+            <td style="color:var(--muted); font-size:12px;">{{ em.role|default:"—" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="2"><div class="empty-state" style="padding:20px;">Not linked to any experiments</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

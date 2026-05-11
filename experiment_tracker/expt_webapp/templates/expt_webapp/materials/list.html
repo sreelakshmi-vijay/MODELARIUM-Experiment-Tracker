@@ -1,0 +1,59 @@
+{% extends "expt_webapp/base.html" %}
+{% block title %}Materials · Modelarium{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div>
+      <div class="page-title">Materials</div>
+      <div class="page-sub">Datasets, scripts, configs and other versioned assets</div>
+    </div>
+    <div style="padding-bottom:20px;">
+      <div style="display:flex; gap:8px;">
+      <a href="{% url 'material-type-list' %}" class="btn btn-ghost">Manage Types</a>
+      <a href="{% url 'material-create' %}" class="btn btn-primary">+ New Material</a>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div style="padding:16px 32px; border-bottom:1px solid var(--border); display:flex; gap:10px;">
+  <form method="get" style="display:flex; gap:10px; flex:1;">
+    <input type="text" name="name" value="{{ request.GET.name }}" placeholder="Search name…" class="input" style="max-width:220px;">
+    <select name="material_type_id" class="input" style="max-width:180px;">
+      <option value="">All Types</option>
+      {% for mt in material_types %}
+        <option value="{{ mt.id }}" {% if request.GET.material_type_id == mt.id|stringformat:"s" %}selected{% endif %}>{{ mt.name }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-ghost">Filter</button>
+    {% if request.GET.name or request.GET.material_type_id %}
+      <a href="{% url 'material-list' %}" class="btn btn-ghost" style="color:var(--danger);">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<div style="padding:24px 32px;">
+  <div class="card">
+    <table class="data-table">
+      <thead><tr><th>Name</th><th>Type</th><th>Version</th><th>Description</th><th>Link</th><th>Created</th><th></th></tr></thead>
+      <tbody>
+        {% for m in materials %}
+        <tr class="fade-in">
+          <td><a href="{% url 'material-detail' m.id %}" style="color:var(--text); text-decoration:none; font-weight:500;">{{ m.name }}</a></td>
+          <td><span class="badge badge-info">{{ m.material_type.name }}</span></td>
+          <td><span class="badge badge-info">{{ m.version }}</span></td>
+          <td style="color:var(--muted); font-size:12px; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ m.description|default:"—" }}</td>
+          <td>{% if m.link %}<a href="{{ m.link }}" target="_blank" style="color:var(--accent); font-size:12px;">↗ Link</a>{% else %}<span style="color:var(--muted);">—</span>{% endif %}</td>
+          <td style="color:var(--muted); font-size:12px; font-family:'Space Mono',monospace;">{{ m.created_at|date:"Y-m-d" }}</td>
+          <td style="text-align:right;"><a href="{% url 'material-detail' m.id %}" class="btn btn-ghost" style="padding:4px 10px; font-size:10px;">View →</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7"><div class="empty-state">No materials found. <a href="{% url 'material-create' %}" style="color:var(--accent);">Add one →</a></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

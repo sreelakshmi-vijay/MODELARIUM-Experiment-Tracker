@@ -1,0 +1,59 @@
+{% extends "expt_webapp/base.html" %}
+{% block title %}Experiments · Modelarium{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div>
+      <div class="page-title">Experiments</div>
+      <div class="page-sub">{{ experiments|length }} experiment{{ experiments|length|pluralize }}</div>
+    </div>
+    <div style="padding-bottom:20px;">
+      <a href="{% url 'experiment-create' %}" class="btn btn-primary">+ New Experiment</a>
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div style="padding:16px 32px; border-bottom:1px solid var(--border); display:flex; gap:10px; flex-wrap:wrap;">
+  <form method="get" style="display:flex; gap:10px; flex:1;">
+    <input type="text" name="name" value="{{ request.GET.name }}" placeholder="Search name…" class="input" style="max-width:220px;">
+    <select name="model_id" class="input" style="max-width:200px;">
+      <option value="">All Models</option>
+      {% for m in all_models %}
+        <option value="{{ m.id }}" {% if request.GET.model_id == m.id|stringformat:"s" %}selected{% endif %}>{{ m.name }} ({{ m.version }})</option>
+      {% endfor %}
+    </select>
+    <input type="text" name="type" value="{{ request.GET.type }}" placeholder="Type…" class="input" style="max-width:140px;">
+    <button type="submit" class="btn btn-ghost">Filter</button>
+    {% if request.GET.name or request.GET.model_id or request.GET.type %}
+      <a href="{% url 'experiment-list' %}" class="btn btn-ghost" style="color:var(--danger);">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<div style="padding:24px 32px;">
+  <div class="card">
+    <table class="data-table">
+      <thead>
+        <tr><th>Name</th><th>Model</th><th>Type</th><th>Version</th><th>Runs</th><th>Created</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for e in experiments %}
+        <tr class="fade-in">
+          <td><a href="{% url 'experiment-detail' e.id %}" style="color:var(--text); text-decoration:none; font-weight:500;">{{ e.name }}</a></td>
+          <td><a href="{% url 'model-detail' e.model.id %}" style="color:var(--slate); text-decoration:none; font-size:12px;">{{ e.model.name }}</a></td>
+          <td style="color:var(--muted); font-size:12px;">{{ e.type|default:"—" }}</td>
+          <td><span class="badge badge-info">{{ e.version }}</span></td>
+          <td style="font-family:'Space Mono',monospace; font-size:12px;">{{ e.run_count }}</td>
+          <td style="color:var(--muted); font-size:12px; font-family:'Space Mono',monospace;">{{ e.created_at|date:"Y-m-d" }}</td>
+          <td style="text-align:right;"><a href="{% url 'experiment-detail' e.id %}" class="btn btn-ghost" style="padding:4px 10px; font-size:10px;">View →</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7"><div class="empty-state">No experiments found. <a href="{% url 'experiment-create' %}" style="color:var(--accent);">Create one →</a></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

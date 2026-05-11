@@ -1,0 +1,76 @@
+{% extends "expt_webapp/base.html" %}
+{% block title %}{% if platform %}Edit {{ platform.name }}{% else %}New Platform{% endif %} · ExptTracker{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+  <a href="{% url 'platform-list' %}">Platforms</a>
+  {% if platform %}<span>/</span><a href="{% url 'platform-detail' platform.id %}">{{ platform.name }}</a>{% endif %}
+  <span>/</span><span style="color:var(--text);">{% if platform %}Edit{% else %}New{% endif %}</span>
+</div>
+<div class="page-header">
+  <div class="page-title">{% if platform %}Edit Platform{% else %}New Platform{% endif %}</div>
+  <div class="page-sub">{% if platform %}Update platform details{% else %}Define a new hardware/software platform{% endif %}</div>
+</div>
+<div style="padding:32px;">
+  <div class="card" style="max-width:600px;">
+    <form method="post" style="padding:28px; display:flex; flex-direction:column; gap:20px;">
+      {% csrf_token %}
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Name *</label>
+        <input type="text" name="name" value="{{ platform.name|default:'' }}" class="input" required placeholder="e.g. NVIDIA-A100">
+      </div>
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Description</label>
+        <textarea name="description" class="input" rows="3" placeholder="Hardware specs, OS, environment details…">{{ platform.description|default:'' }}</textarea>
+      </div>
+
+      <!-- Linked Setups -->
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:4px;">Linked Setups</label>
+        <div style="font-size:12px; color:var(--muted); margin-bottom:10px;">Associate this platform with one or more setups.</div>
+        {% if all_setups %}
+        <div style="border:1px solid var(--border); border-radius:8px; overflow:hidden; max-height:240px; overflow-y:auto;">
+          {% for s in all_setups %}
+          <div style="border-bottom:1px solid var(--border);">
+            <label style="display:flex; align-items:center; gap:10px; padding:10px 14px; cursor:pointer; transition:background 0.1s;" onmouseover="this.style.background='var(--bg-2)'" onmouseout="this.style.background=''">
+              <input type="checkbox" name="setups" value="{{ s.id }}"
+                id="setup_{{ s.id }}"
+                {% if current_setup_ids and s.id in current_setup_ids %}checked{% endif %}
+                onchange="toggleRole('{{ s.id }}', this.checked)"
+                style="accent-color:var(--accent); width:15px; height:15px;">
+              <span style="font-weight:500;">{{ s.name }}</span>
+              {% if s.description %}<span style="color:var(--muted); font-size:12px;">— {{ s.description|truncatechars:40 }}</span>{% endif %}
+            </label>
+            <div id="role_row_{{ s.id }}" style="{% if current_setup_ids and s.id in current_setup_ids %}display:flex{% else %}display:none{% endif %}; align-items:center; gap:8px; padding:6px 14px 10px 38px; background:var(--bg-2);">
+              <label style="font-size:11px; color:var(--muted); font-family:'Space Mono',monospace; text-transform:uppercase; letter-spacing:0.08em; white-space:nowrap;">Role:</label>
+              <input type="text" name="setup_role_{{ s.id }}" placeholder="e.g. primary, compute, storage" class="input" style="padding:4px 8px; font-size:12px; height:auto;">
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <div style="margin-top:8px; font-size:12px; color:var(--muted);">
+          Don't see the right setup? <a href="{% url 'setup-create' %}" style="color:var(--accent);" target="_blank">Create one →</a>
+        </div>
+        {% else %}
+        <div style="border:1px solid var(--border); border-radius:8px; padding:20px; text-align:center; color:var(--muted); font-size:13px;">
+          No setups exist yet. <a href="{% url 'setup-create' %}" style="color:var(--accent);" target="_blank">Create one →</a>
+        </div>
+        {% endif %}
+      </div>
+
+      <div style="display:flex; gap:10px; padding-top:8px; border-top:1px solid var(--border);">
+        <button type="submit" class="btn btn-primary">{% if platform %}Save Changes{% else %}Create Platform{% endif %}</button>
+        {% if platform %}<a href="{% url 'platform-detail' platform.id %}" class="btn btn-ghost">Cancel</a>
+        {% else %}<a href="{% url 'platform-list' %}" class="btn btn-ghost">Cancel</a>{% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function toggleRole(setupId, checked) {
+  document.getElementById('role_row_' + setupId).style.display = checked ? 'flex' : 'none';
+}
+</script>
+{% endblock %}

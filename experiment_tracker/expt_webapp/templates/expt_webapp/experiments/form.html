@@ -1,0 +1,96 @@
+{% extends "expt_webapp/base.html" %}
+{% block title %}{% if experiment %}Edit {{ experiment.name }}{% else %}New Experiment{% endif %} · Modelarium{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{% url 'experiment-list' %}">Experiments</a>
+  {% if experiment %}<span>/</span><a href="{% url 'experiment-detail' experiment.id %}">{{ experiment.name }}</a>{% endif %}
+  <span>/</span>
+  <span style="color:var(--text);">{% if experiment %}Edit{% else %}New{% endif %}</span>
+</div>
+
+<div class="page-header">
+  <div class="page-title">{% if experiment %}Edit Experiment{% else %}New Experiment{% endif %}</div>
+  <div class="page-sub">{% if experiment %}Update experiment details{% else %}Define a new experiment{% endif %}</div>
+</div>
+
+<div style="padding:32px;">
+  <div class="card" style="max-width:600px;">
+    <form method="post" style="padding:28px; display:flex; flex-direction:column; gap:20px;">
+      {% csrf_token %}
+
+      {% if error %}
+      <div style="background:rgba(184,50,50,0.1); border:1px solid var(--danger); color:var(--danger); padding:10px 14px; border-radius:6px; font-size:13px;">
+        {{ error }}
+      </div>
+      {% endif %}
+
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Model *</label>
+        <select name="model" class="input" required>
+          <option value="">— Select a model —</option>
+          {% for m in all_models %}
+            <option value="{{ m.id }}" {% if experiment.model_id == m.id or request.GET.model == m.id|stringformat:"s" %}selected{% endif %}>{{ m.name }} ({{ m.version }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Name *</label>
+        <input type="text" name="name" value="{{ experiment.name|default:'' }}" class="input" required placeholder="e.g. Baseline Eval">
+      </div>
+
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Version *</label>
+        <input type="text" name="version" value="{{ experiment.version|default:'' }}" class="input" required placeholder="e.g. v1">
+      </div>
+
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Type</label>
+        <input type="text" name="type" value="{{ experiment.type|default:'' }}" class="input" placeholder="e.g. classification, regression">
+      </div>
+
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Description</label>
+        <textarea name="description" class="input" rows="3" placeholder="What is this experiment testing?">{{ experiment.description|default:'' }}</textarea>
+      </div>
+
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:4px;">
+          Setups * <span style="color:var(--danger); font-size:10px; text-transform:none;">(at least one required)</span>
+        </label>
+        <div style="font-size:12px; color:var(--muted); margin-bottom:10px;">Select one or more execution environments for this experiment.</div>
+        {% if all_setups %}
+        <div style="border:1px solid var(--border); border-radius:8px; overflow:hidden; max-height:220px; overflow-y:auto;">
+          {% for s in all_setups %}
+          <label style="display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.1s;" onmouseover="this.style.background='var(--bg-2)'" onmouseout="this.style.background=''">
+            <input type="checkbox" name="setups" value="{{ s.id }}"
+              {% if selected_setup_ids and s.id in selected_setup_ids %}checked{% endif %}
+              style="accent-color:var(--accent); width:15px; height:15px;">
+            <span style="font-weight:500;">{{ s.name }}</span>
+            {% if s.description %}<span style="color:var(--muted); font-size:12px;">— {{ s.description|truncatechars:50 }}</span>{% endif %}
+          </label>
+          {% endfor %}
+        </div>
+        <div style="margin-top:8px; font-size:12px; color:var(--muted);">
+          Don't see the right setup? <a href="{% url 'setup-create' %}" style="color:var(--accent);" target="_blank">Create one →</a>
+        </div>
+        {% else %}
+        <div style="border:1px solid var(--border); border-radius:8px; padding:20px; text-align:center; color:var(--muted); font-size:13px;">
+          No setups exist yet. <a href="{% url 'setup-create' %}" style="color:var(--accent);" target="_blank">Create one first →</a>
+        </div>
+        {% endif %}
+      </div>
+
+      <div style="display:flex; gap:10px; padding-top:8px; border-top:1px solid var(--border);">
+        <button type="submit" class="btn btn-primary">{% if experiment %}Save Changes{% else %}Create Experiment{% endif %}</button>
+        {% if experiment %}
+          <a href="{% url 'experiment-detail' experiment.id %}" class="btn btn-ghost">Cancel</a>
+        {% else %}
+          <a href="{% url 'experiment-list' %}" class="btn btn-ghost">Cancel</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

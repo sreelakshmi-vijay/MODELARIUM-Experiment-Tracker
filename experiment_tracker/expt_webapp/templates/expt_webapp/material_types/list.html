@@ -1,0 +1,57 @@
+{% extends "expt_webapp/base.html" %}
+{% block title %}Material Types · Modelarium{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{% url 'material-list' %}">Materials</a>
+  <span>/</span>
+  <span style="color:var(--text);">Types</span>
+</div>
+
+<div class="page-header">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div>
+      <div class="page-title">Material Types</div>
+      <div class="page-sub">Manage categories for materials</div>
+    </div>
+    <a href="{% url 'material-type-create' %}" class="btn btn-primary">+ New Type</a>
+  </div>
+</div>
+
+<div style="padding:24px 32px;">
+  <div class="card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Materials</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for mt in material_types %}
+        <tr>
+          <td><a href="{% url 'material-type-detail' mt.id %}" style="color:var(--text); font-weight:500; text-decoration:none;">{{ mt.name }}</a></td>
+          <td style="color:var(--muted); font-size:13px;">{{ mt.description|default:"—"|truncatechars:60 }}</td>
+          <td style="font-family:'Space Mono',monospace; font-size:12px;">{{ mt.material_count }}</td>
+          <td style="text-align:right;">
+            <a href="{% url 'material-type-edit' mt.id %}" class="btn btn-ghost" style="font-size:12px; padding:4px 10px;">Edit</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4">
+            <div class="empty-state" style="padding:40px;">
+              <div style="font-size:24px; margin-bottom:8px;">🗂</div>
+              <div>No material types yet.</div>
+              <a href="{% url 'material-type-create' %}" style="color:var(--accent); text-decoration:none; font-size:13px;">Create one →</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

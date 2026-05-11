@@ -1,0 +1,51 @@
+{% extends "expt_webapp/base.html" %}
+{% block title %}{{ platform.name }} · Modelarium{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+  <a href="{% url 'platform-list' %}">Platforms</a><span>/</span>
+  <span style="color:var(--text);">{{ platform.name }}</span>
+</div>
+<div class="page-header">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div>
+      <div class="page-title">{{ platform.name }}</div>
+      <div class="page-sub">{{ platform.description|default:"No description" }}</div>
+    </div>
+    <div style="padding-bottom:20px;"><a href="{% url 'platform-edit' platform.id %}" class="btn btn-ghost">Edit</a></div>
+  </div>
+</div>
+<div style="padding:24px 32px; display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+  <div class="card">
+    <div style="padding:14px 18px; border-bottom:1px solid var(--border); font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted);">Linked Setups</div>
+    <table class="data-table">
+      <thead><tr><th>Setup</th><th>Role</th></tr></thead>
+      <tbody>
+        {% for sp in setups %}
+        <tr>
+          <td><a href="{% url 'setup-detail' sp.setup.id %}" style="color:var(--text); text-decoration:none;">{{ sp.setup.name }}</a></td>
+          <td style="color:var(--muted); font-size:12px;">{{ sp.role|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="2"><div class="empty-state" style="padding:20px;">No setups linked</div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <div style="padding:14px 18px; border-bottom:1px solid var(--border); font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted);">Recent Runs</div>
+    <table class="data-table">
+      <thead><tr><th>Run</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for r in runs %}
+        <tr>
+          <td><a href="{% url 'run-detail' r.id %}" style="color:var(--text); text-decoration:none;">{{ r.name|default:r.id }}</a></td>
+          <td><span class="badge badge-{{ r.status }}">{{ r.status }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="2"><div class="empty-state" style="padding:20px;">No runs via this platform</div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

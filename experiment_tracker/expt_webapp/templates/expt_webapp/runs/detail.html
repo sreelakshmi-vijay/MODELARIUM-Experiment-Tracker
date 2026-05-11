@@ -1,0 +1,371 @@
+{% extends "expt_webapp/base.html" %}
+{% block title %}{% if run.name %}{{ run.name }}{% else %}Run #{{ run.id }}{% endif %} · ExptTracker{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{% url 'experiment-list' %}">Experiments</a>
+  <span>/</span>
+  <a href="{% url 'experiment-detail' run.experiment.id %}">{{ run.experiment.name }}</a>
+  <span>/</span>
+  <span style="color:var(--text);">{% if run.name %}{{ run.name }}{% else %}Run #{{ run.id }}{% endif %}</span>
+</div>
+
+<div class="page-header">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="page-title">{% if run.name %}{{ run.name }}{% else %}Run #{{ run.id }}{% endif %}</div>
+        <span class="badge badge-{{ run.status }}">{{ run.status }}</span>
+      </div>
+      <div class="page-sub">
+        Experiment: <a href="{% url 'experiment-detail' run.experiment.id %}" style="color:var(--accent); text-decoration:none;">{{ run.experiment.name }}</a>
+        &nbsp;·&nbsp;
+        Setup: <a href="{% url 'setup-detail' run.setup.id %}" style="color:var(--accent); text-decoration:none;">{{ run.setup.name }}</a>
+        {% if duration %}&nbsp;·&nbsp; Duration: <span style="font-family:'Space Mono',monospace;">{{ duration }}</span>{% endif %}
+      </div>
+    </div>
+    <div style="display:flex; gap:8px; padding-bottom:20px;">
+      <a href="{% url 'run-edit' run.id %}" class="btn btn-ghost">Edit</a>
+    </div>
+  </div>
+</div>
+
+<!-- Stats bar -->
+<div class="card" style="margin:24px 32px 0; display:flex; overflow:hidden;">
+  <div class="stat-block">
+    <div class="stat-value" style="font-family:'Space Mono',monospace; font-size:15px;">{{ run.started_at|date:"M d, H:i"|default:"—" }}</div>
+    <div class="stat-label">Started</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-value" style="font-family:'Space Mono',monospace; font-size:15px;">{{ run.finished_at|date:"M d, H:i"|default:"—" }}</div>
+    <div class="stat-label">Finished</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-value">{{ metrics.count }}</div>
+    <div class="stat-label">Metrics</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-value" style="color:var(--accent);">{{ log_counts.info }}</div>
+    <div class="stat-label">Info Logs</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-value" style="color:var(--warning);">{{ log_counts.warning }}</div>
+    <div class="stat-label">Warnings</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-value" style="color:var(--danger);">{{ log_counts.error }}</div>
+    <div class="stat-label">Errors</div>
+  </div>
+</div>
+
+{% if messages %}
+<div style="padding:16px 32px 0;">
+  {% for msg in messages %}
+  <div style="background:rgba(90,138,96,0.12); border:1px solid var(--success); color:var(--success); padding:10px 14px; border-radius:6px; font-size:13px; margin-bottom:8px;">{{ msg }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div style="padding:24px 32px 0;">
+  <div class="tab-bar" style="padding:0;">
+    <a href="#metrics" class="tab active" onclick="showTab('metrics',this)">Metrics</a>
+    <a href="#logs"    class="tab"        onclick="showTab('logs',this)">Logs</a>
+    <a href="#outputs" class="tab"        onclick="showTab('outputs',this)">Outputs</a>
+    <a href="#materials" class="tab"      onclick="showTab('materials',this)">Materials</a>
+    <a href="#timeline" class="tab"       onclick="showTab('timeline',this)">Timeline</a>
+  </div>
+
+  <!-- ── METRICS ── -->
+  <div id="tab-metrics" style="padding-top:20px;">
+    <div style="display:grid; grid-template-columns:1fr 360px; gap:16px; align-items:start;">
+      <div class="card">
+        <div style="padding:14px 18px; border-bottom:1px solid var(--border); font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted);">Recorded Metrics</div>
+        <table class="data-table">
+          <thead><tr><th>Metric</th><th>Value</th><th></th></tr></thead>
+          <tbody>
+            {% for m in metrics %}
+            <tr>
+              <td style="font-family:'Space Mono',monospace; font-size:12px;">{{ m.metric_name }}</td>
+              <td style="font-family:'Space Mono',monospace; font-size:13px; color:var(--accent);">{{ m.metric_value }}</td>
+              <td style="text-align:right;">
+                <form method="post" style="display:inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="delete_metric">
+                  <input type="hidden" name="metric_name" value="{{ m.metric_name }}">
+                  <button type="submit" class="btn btn-ghost" style="padding:3px 8px; font-size:11px; color:var(--danger);" onclick="return confirm('Delete this metric?')">✕</button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3"><div class="empty-state" style="padding:20px;">No metrics yet</div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card" style="padding:20px;">
+        <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:14px;">Add Metric</div>
+        <form method="post" style="display:flex; flex-direction:column; gap:12px;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="add_metric">
+          <div>
+            <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Name *</label>
+            <input type="text" name="metric_name" class="input" required placeholder="e.g. accuracy, loss">
+          </div>
+          <div>
+            <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Value *</label>
+            <input type="number" step="any" name="metric_value" class="input" required placeholder="e.g. 0.9423">
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Save Metric</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LOGS ── -->
+  <div id="tab-logs" style="display:none; padding-top:20px;">
+    <div style="display:grid; grid-template-columns:1fr 380px; gap:16px; align-items:start;">
+      <div>
+        <div style="display:flex; gap:6px; margin-bottom:12px;">
+          <a href="?" class="badge {% if not request.GET.log_level %}badge-running{% else %}badge-info{% endif %}" style="cursor:pointer; text-decoration:none; padding:5px 12px;">All</a>
+          <a href="?log_level=info"    class="badge badge-info"   style="cursor:pointer; text-decoration:none; padding:5px 12px;">Info ({{ log_counts.info }})</a>
+          <a href="?log_level=warning" class="badge badge-pending" style="cursor:pointer; text-decoration:none; padding:5px 12px;">Warning ({{ log_counts.warning }})</a>
+          <a href="?log_level=error"   class="badge badge-failed"  style="cursor:pointer; text-decoration:none; padding:5px 12px;">Error ({{ log_counts.error }})</a>
+        </div>
+        <div class="card">
+          <table class="data-table">
+            <thead><tr><th>Level</th><th>Message</th><th>Time</th><th></th></tr></thead>
+            <tbody>
+              {% for log in logs %}
+              <tr>
+                <td><span class="badge badge-{% if log.level == 'error' %}failed{% elif log.level == 'warning' %}pending{% else %}info{% endif %}">{{ log.level }}</span></td>
+                <td style="font-family:'Space Mono',monospace; font-size:11px; word-break:break-all;">{{ log.message }}</td>
+                <td style="color:var(--muted); font-size:11px; font-family:'Space Mono',monospace; white-space:nowrap;">{{ log.logged_at|date:"M d H:i:s" }}</td>
+                <td>
+                  <form method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_log">
+                    <input type="hidden" name="log_id" value="{{ log.id }}">
+                    <button type="submit" class="btn btn-ghost" style="padding:3px 8px; font-size:11px; color:var(--danger);" onclick="return confirm('Delete?')">✕</button>
+                  </form>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4"><div class="empty-state" style="padding:20px;">No logs yet</div></td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <!-- Single log entry -->
+        <div class="card" style="padding:20px;">
+          <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:14px;">Add Single Log</div>
+          <form method="post" style="display:flex; flex-direction:column; gap:10px;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_log">
+            <div>
+              <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Level</label>
+              <select name="level" class="input">
+                <option value="info">Info</option>
+                <option value="warning">Warning</option>
+                <option value="error">Error</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Message *</label>
+              <textarea name="message" class="input" rows="2" required placeholder="Log message…"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;">Add Log</button>
+          </form>
+        </div>
+
+        <!-- Bulk import from raw text -->
+        <div class="card" style="padding:20px;">
+          <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:6px;">Bulk Import from Log Text</div>
+          <div style="font-size:11px; color:var(--muted); margin-bottom:12px;">Paste raw log output. Lines with INFO / WARNING / ERROR keywords are parsed automatically. Each line becomes one entry.</div>
+          <form method="post" style="display:flex; flex-direction:column; gap:10px;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="bulk_logs">
+            <textarea name="raw_logs" class="input" rows="7" placeholder="e.g.&#10;INFO Starting training loop&#10;WARNING High memory usage&#10;ERROR Epoch 3 failed"></textarea>
+            <button type="submit" class="btn btn-primary" style="width:100%;">Import Logs</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── OUTPUTS ── -->
+  <div id="tab-outputs" style="display:none; padding-top:20px;">
+    <div style="display:grid; grid-template-columns:1fr 360px; gap:16px; align-items:start;">
+      <div class="card">
+        <div style="padding:14px 18px; border-bottom:1px solid var(--border); font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted);">Run Outputs</div>
+        <table class="data-table">
+          <thead><tr><th>Type</th><th>Name</th><th>Value</th><th>Created</th><th></th></tr></thead>
+          <tbody>
+            {% for out in outputs %}
+            <tr>
+              <td><span class="badge badge-info">{{ out.type }}</span></td>
+              <td style="font-weight:500;">{{ out.name|default:"—" }}</td>
+              <td style="font-family:'Space Mono',monospace; font-size:11px; color:var(--muted);">
+                {% if out.file %}<a href="{{ out.file.url }}" style="color:var(--accent);">Download</a>
+                {% elif out.value %}{{ out.value|truncatechars:60 }}
+                {% else %}—{% endif %}
+              </td>
+              <td style="color:var(--muted); font-size:11px; font-family:'Space Mono',monospace;">{{ out.created_at|date:"M d H:i" }}</td>
+              <td>
+                <form method="post" style="display:inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="delete_output">
+                  <input type="hidden" name="output_id" value="{{ out.id }}">
+                  <button type="submit" class="btn btn-ghost" style="padding:3px 8px; font-size:11px; color:var(--danger);" onclick="return confirm('Delete?')">✕</button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5"><div class="empty-state" style="padding:20px;">No outputs yet</div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card" style="padding:20px;">
+        <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:14px;">Add Output</div>
+        <form method="post" style="display:flex; flex-direction:column; gap:12px;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="add_output">
+          <div>
+            <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Type</label>
+            <select name="out_type" class="input">
+              {% for val, label in output_types %}
+              <option value="{{ val }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Name</label>
+            <input type="text" name="name" class="input" placeholder="e.g. model_checkpoint.pt">
+          </div>
+          <div>
+            <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Value / Content</label>
+            <textarea name="value" class="input" rows="3" placeholder="Metric value, JSON, URL, description…"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Add Output</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MATERIALS ── -->
+  <div id="tab-materials" style="display:none; padding-top:20px;">
+    <div style="font-size:12px; color:var(--muted); margin-bottom:12px;">Materials are linked at the experiment level. Adding here links to <strong>{{ run.experiment.name }}</strong>.</div>
+    <div style="display:grid; grid-template-columns:1fr 360px; gap:16px; align-items:start;">
+      <div class="card">
+        <div style="padding:14px 18px; border-bottom:1px solid var(--border); font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted);">Linked Materials</div>
+        <table class="data-table">
+          <thead><tr><th>Material</th><th>Type</th><th>Version</th><th>Role</th></tr></thead>
+          <tbody>
+            {% for em in exp_materials %}
+            <tr>
+              <td><a href="{% url 'material-detail' em.material.id %}" style="color:var(--text); text-decoration:none; font-weight:500;">{{ em.material.name }}</a></td>
+              <td style="color:var(--muted); font-size:12px;">{{ em.material.material_type.name }}</td>
+              <td><span class="badge badge-info">{{ em.material.version }}</span></td>
+              <td style="color:var(--muted); font-size:12px;">{{ em.role|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4"><div class="empty-state" style="padding:20px;">No materials linked</div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card" style="padding:20px;">
+        <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:14px;">Link Material</div>
+        {% if available_materials %}
+        <form method="post" style="display:flex; flex-direction:column; gap:12px;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="add_material">
+          <div>
+            <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Material *</label>
+            <select name="material_id" class="input" required>
+              <option value="">— Select —</option>
+              {% for mat in available_materials %}
+              <option value="{{ mat.id }}">{{ mat.name }} ({{ mat.material_type.name }}, {{ mat.version }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Role</label>
+            <input type="text" name="role" class="input" placeholder="e.g. training data, config">
+          </div>
+          <div>
+            <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Notes</label>
+            <input type="text" name="notes" class="input" placeholder="Optional notes">
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Link Material</button>
+        </form>
+        {% else %}
+        <div style="color:var(--muted); font-size:13px;">All materials are already linked, or <a href="{% url 'material-create' %}" style="color:var(--accent);">create a new one →</a></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TIMELINE ── -->
+  <div id="tab-timeline" style="display:none; padding-top:20px;">
+    {% if timeline %}
+    <div class="card" style="padding:0; overflow:hidden;">
+      <div style="padding:14px 18px; border-bottom:1px solid var(--border); font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted);">
+        Auto-generated from {{ timeline|length }} event{{ timeline|length|pluralize }}
+      </div>
+      <div style="padding:8px 0;">
+        {% for event in timeline %}
+        <div style="display:flex; gap:16px; padding:10px 20px; border-bottom:1px solid var(--border); {% if event.type == 'log' and event.level == 'error' %}background:rgba(184,50,50,0.04);{% elif event.type == 'log' and event.level == 'warning' %}background:rgba(184,122,32,0.04);{% endif %}">
+          <div style="font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); white-space:nowrap; padding-top:3px; min-width:80px;">{{ event.timestamp|date:"H:i:s" }}</div>
+          <div style="flex:1;">
+            {% if event.type == 'log' %}
+              <span class="badge badge-{% if event.level == 'error' %}failed{% elif event.level == 'warning' %}pending{% else %}info{% endif %}" style="font-size:10px; margin-right:8px;">{{ event.level }}</span>
+              <span style="font-family:'Space Mono',monospace; font-size:12px;">{{ event.message }}</span>
+            {% else %}
+              <span class="badge badge-running" style="font-size:10px; margin-right:8px;">{{ event.output_type }}</span>
+              <span style="font-size:13px; color:var(--muted);">Output: </span><span style="font-size:13px;">{{ event.name|default:"(unnamed)" }}</span>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% else %}
+    <div class="empty-state">Timeline builds automatically from logs and outputs. Add some logs to get started.</div>
+    {% endif %}
+  </div>
+
+  {% if run.notes %}
+  <div class="card" style="margin-top:20px; padding:20px 24px;">
+    <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Notes</div>
+    <div style="font-size:14px; line-height:1.7; white-space:pre-wrap;">{{ run.notes }}</div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function showTab(name, el) {
+  event.preventDefault();
+  document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display = 'none');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).style.display = 'block';
+  el.classList.add('active');
+}
+// Auto-open tab from hash
+window.addEventListener('DOMContentLoaded', () => {
+  const hash = location.hash.replace('#','');
+  if (hash) {
+    const tab = document.querySelector(`.tab[href="#${hash}"]`);
+    if (tab) showTab(hash, tab);
+  }
+});
+</script>
+{% endblock %}

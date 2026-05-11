@@ -1,0 +1,51 @@
+{% extends "expt_webapp/base.html" %}
+{% block title %}{% if material %}Edit {{ material.name }}{% else %}New Material{% endif %} · Modelarium{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{% url 'material-list' %}">Materials</a>
+  {% if material %}<span>/</span><a href="{% url 'material-detail' material.id %}">{{ material.name }}</a>{% endif %}
+  <span>/</span><span style="color:var(--text);">{% if material %}Edit{% else %}New{% endif %}</span>
+</div>
+<div class="page-header">
+  <div class="page-title">{% if material %}Edit Material{% else %}New Material{% endif %}</div>
+  <div class="page-sub">{% if material %}Update material details{% else %}Register a new material asset{% endif %}</div>
+</div>
+<div style="padding:32px;">
+  <div class="card" style="max-width:560px;">
+    <form method="post" style="padding:28px; display:flex; flex-direction:column; gap:20px;">
+      {% csrf_token %}
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Type *</label>
+        <select name="material_type" class="input" required>
+          <option value="">— Select type —</option>
+          {% for mt in material_types %}
+            <option value="{{ mt.id }}" {% if material.material_type_id == mt.id %}selected{% endif %}>{{ mt.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Name *</label>
+        <input type="text" name="name" value="{{ material.name|default:'' }}" class="input" required placeholder="e.g. ImageNet-2012">
+      </div>
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Version *</label>
+        <input type="text" name="version" value="{{ material.version|default:'' }}" class="input" required placeholder="e.g. v1">
+      </div>
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Description</label>
+        <textarea name="description" class="input" rows="3" placeholder="What is this material?">{{ material.description|default:'' }}</textarea>
+      </div>
+      <div>
+        <label style="display:block; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Link</label>
+        <input type="url" name="link" value="{{ material.link|default:'' }}" class="input" placeholder="https://...">
+      </div>
+      <div style="display:flex; gap:10px; padding-top:8px; border-top:1px solid var(--border);">
+        <button type="submit" class="btn btn-primary">{% if material %}Save Changes{% else %}Create Material{% endif %}</button>
+        {% if material %}<a href="{% url 'material-detail' material.id %}" class="btn btn-ghost">Cancel</a>
+        {% else %}<a href="{% url 'material-list' %}" class="btn btn-ghost">Cancel</a>{% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

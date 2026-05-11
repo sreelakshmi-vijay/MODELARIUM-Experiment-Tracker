@@ -1,0 +1,202 @@
+{% extends "expt_webapp/base.html" %}
+{% block title %}{{ model.name }} · Modelarium{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{% url 'model-list' %}">Models</a>
+  <span>/</span>
+  <span style="color:var(--text);">{{ model.name }}</span>
+</div>
+
+<div class="page-header">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="page-title">{{ model.name }}</div>
+        <span class="badge badge-info">{{ model.version }}</span>
+      </div>
+      <div class="page-sub">{{ model.description|default:"No description" }}</div>
+    </div>
+    <div style="display:flex; gap:8px; padding-bottom:20px;">
+      <a href="{% url 'model-edit' model.id %}" class="btn btn-ghost">Edit</a>
+      <a href="{% url 'experiment-create' %}?model={{ model.id }}" class="btn btn-primary">+ New Experiment</a>
+    </div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="card" style="margin:24px 32px 0; display:flex; overflow:hidden;">
+  <div class="stat-block">
+    <div class="stat-value">{{ stats.total_experiments }}</div>
+    <div class="stat-label">Experiments</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-value">{{ stats.total_runs }}</div>
+    <div class="stat-label">Total Runs</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-value" style="color:#6dc86d;">{% if stats.success_rate %}{{ stats.success_rate }}%{% else %}—{% endif %}</div>
+    <div class="stat-label">Success Rate</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-value" style="color:var(--danger);">{{ stats.failed_runs }}</div>
+    <div class="stat-label">Failed</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-value" style="color:var(--accent);">{{ stats.active_runs }}</div>
+    <div class="stat-label">Active</div>
+  </div>
+</div>
+
+{% if messages %}
+<div style="padding:16px 32px 0;">
+  {% for msg in messages %}
+  <div style="background:rgba(90,138,96,0.12); border:1px solid var(--success); color:var(--success); padding:10px 14px; border-radius:6px; font-size:13px; margin-bottom:8px;">{{ msg }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Tabs -->
+<div style="padding:24px 32px 0;">
+  <div class="tab-bar" style="padding:0;">
+    <a href="#experiments" class="tab active" onclick="showTab('experiments',this)">Experiments</a>
+    <a href="#materials"   class="tab"        onclick="showTab('materials',this)">Materials</a>
+    <a href="#lineage"     class="tab"        onclick="showTab('lineage',this)">Lineage</a>
+    {% if tags %}<a href="#tags" class="tab"  onclick="showTab('tags',this)">Tags</a>{% endif %}
+  </div>
+
+  <!-- Experiments tab -->
+  <div id="tab-experiments" style="padding-top:20px;">
+    <div class="card">
+      <table class="data-table">
+        <thead><tr><th>Name</th><th>Type</th><th>Version</th><th>Runs</th><th>Created</th><th></th></tr></thead>
+        <tbody>
+          {% for e in experiments %}
+          <tr>
+            <td><a href="{% url 'experiment-detail' e.id %}" style="color:var(--text); text-decoration:none; font-weight:500;">{{ e.name }}</a></td>
+            <td style="color:var(--muted); font-size:12px;">{{ e.type|default:"—" }}</td>
+            <td><span class="badge badge-info">{{ e.version }}</span></td>
+            <td style="font-family:'Space Mono',monospace; font-size:12px;">{{ e.run_count }}</td>
+            <td style="color:var(--muted); font-size:12px; font-family:'Space Mono',monospace;">{{ e.created_at|date:"Y-m-d" }}</td>
+            <td style="text-align:right;"><a href="{% url 'experiment-detail' e.id %}" class="btn btn-ghost" style="padding:4px 10px; font-size:10px;">View →</a></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6"><div class="empty-state">No experiments yet. <a href="{% url 'experiment-create' %}?model={{ model.id }}" style="color:var(--accent);">Create one →</a></div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Materials tab -->
+  <div id="tab-materials" style="display:none; padding-top:20px;">
+    <div style="display:grid; grid-template-columns:1fr 360px; gap:16px; align-items:start;">
+      <div class="card">
+        <div style="padding:14px 18px; border-bottom:1px solid var(--border); font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted);">Linked Materials</div>
+        <table class="data-table">
+          <thead><tr><th>Material</th><th>Type</th><th>Version</th><th>Relation</th><th></th></tr></thead>
+          <tbody>
+            {% for mm in model_materials %}
+            <tr>
+              <td><a href="{% url 'material-detail' mm.material.id %}" style="color:var(--text); text-decoration:none; font-weight:500;">{{ mm.material.name }}</a></td>
+              <td style="color:var(--muted); font-size:12px;">{{ mm.material.material_type.name }}</td>
+              <td><span class="badge badge-info">{{ mm.material.version }}</span></td>
+              <td style="color:var(--muted); font-size:12px;">{{ mm.relation_type|default:"—" }}</td>
+              <td>
+                <form method="post" style="display:inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="remove_material">
+                  <input type="hidden" name="material_id" value="{{ mm.material.id }}">
+                  <button type="submit" class="btn btn-ghost" style="padding:3px 8px; font-size:11px; color:var(--danger);" onclick="return confirm('Unlink this material?')">✕</button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5"><div class="empty-state">No materials linked yet</div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card" style="padding:20px;">
+        <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:14px;">Link a Material</div>
+        {% if available_materials %}
+        <form method="post" style="display:flex; flex-direction:column; gap:12px;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="add_material">
+          <div>
+            <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Material *</label>
+            <select name="material_id" class="input" required>
+              <option value="">— Select —</option>
+              {% for mat in available_materials %}
+              <option value="{{ mat.id }}">{{ mat.name }} ({{ mat.material_type.name }}, {{ mat.version }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label style="display:block; font-size:11px; color:var(--muted); margin-bottom:4px;">Relation Type</label>
+            <input type="text" name="relation_type" class="input" placeholder="e.g. training data, weights">
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Link Material</button>
+        </form>
+        {% else %}
+        <div style="color:var(--muted); font-size:13px;">All materials linked. <a href="{% url 'material-create' %}" style="color:var(--accent);">Create new →</a></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Lineage tab -->
+  <div id="tab-lineage" style="display:none; padding-top:20px;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+      <div class="card">
+        <div style="padding:14px 18px; border-bottom:1px solid var(--border); font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted);">Parent</div>
+        {% if model.parent_model %}
+          <div style="padding:16px 18px;">
+            <a href="{% url 'model-detail' model.parent_model.id %}" style="color:var(--text); text-decoration:none; font-weight:500;">{{ model.parent_model.name }}</a>
+            <span class="badge badge-info" style="margin-left:8px;">{{ model.parent_model.version }}</span>
+          </div>
+        {% else %}
+          <div class="empty-state" style="padding:30px;">Root model — no parent</div>
+        {% endif %}
+      </div>
+      <div class="card">
+        <div style="padding:14px 18px; border-bottom:1px solid var(--border); font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted);">Children ({{ children|length }})</div>
+        {% for c in children %}
+          <div style="padding:10px 18px; border-bottom:1px solid var(--border);">
+            <a href="{% url 'model-detail' c.id %}" style="color:var(--text); text-decoration:none;">{{ c.name }}</a>
+            <span class="badge badge-info" style="margin-left:8px;">{{ c.version }}</span>
+          </div>
+        {% empty %}
+          <div class="empty-state" style="padding:30px;">No child models</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Tags tab -->
+  {% if tags %}
+  <div id="tab-tags" style="display:none; padding-top:20px;">
+    <div class="card" style="padding:20px;">
+      <div style="display:flex; flex-wrap:wrap; gap:8px;">
+        {% for et in tags %}
+          <span class="badge" style="font-size:12px; padding:4px 12px;">{{ et.tag.name }}</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function showTab(name, el) {
+  event.preventDefault();
+  document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display = 'none');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).style.display = 'block';
+  el.classList.add('active');
+}
+</script>
+{% endblock %}
