@@ -1,6 +1,6 @@
 # Experiment Tracker
 
-A full-stack experiment management platform for tracking machine learning experiments, models, runs, and associated assets. Built with Django REST Framework on the backend and React (Vite + TypeScript) on the frontend.
+A full-stack experiment management platform for tracking machine learning experiments, models, runs, and associated assets. Built with Django REST Framework on the backend and standard HTML/CSS on the frontend.
 
 ---
 
@@ -30,9 +30,8 @@ Experiment Tracker provides a structured way to manage the lifecycle of ML exper
 |-----------|-------------------------------------|
 | Backend   | Python 3, Django 4.2, Django REST Framework |
 | Database  | PostgreSQL                          |
-| Frontend  | React 18, TypeScript, Vite          |
-| Styling   | CSS Modules                         |
-| API comms | Fetch API with a thin `apiFetch` wrapper |
+| Frontend  | HTML, CSS                           |
+| API comms | Django Templates / REST API         |
 
 ---
 
@@ -50,14 +49,6 @@ experiment-tracker/
 │       ├── migrations/          # Database migrations
 │       └── templates/           # Django HTML templates (legacy UI)
 │
-├── experiment-tracker-ui/       # React frontend
-│   ├── src/
-│   │   ├── App.tsx              # Root component & routing
-│   │   ├── api/client.js        # Shared API fetch utility
-│   │   └── assets/              # Static assets
-│   ├── public/                  # Public assets (favicon, icons)
-│   └── vite.config.ts           # Vite build configuration
-│
 └── .gitignore
 ```
 
@@ -68,7 +59,6 @@ experiment-tracker/
 ### Prerequisites
 
 - Python 3.10+
-- Node.js 18+
 - PostgreSQL 14+
 
 ---
@@ -108,27 +98,7 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-The backend will be available at `http://localhost:8000`.
-
----
-
-### Frontend Setup
-
-```bash
-cd experiment-tracker-ui
-
-# Install dependencies
-npm install
-
-# Configure environment
-cp .env.example .env
-# Edit VITE_API_BASE_URL if your backend runs on a different port
-
-# Start the development server
-npm run dev
-```
-
-The frontend will be available at `http://localhost:5173`.
+The application will be available at `http://localhost:8000`.
 
 ---
 
@@ -176,12 +146,6 @@ A browsable API is available in development at `http://localhost:8000/api/`.
 | `DB_PORT`           | Database port (default: `5432`)      |
 | `DB_TEST_NAME`      | Test database name (optional)        |
 
-### Frontend (`experiment-tracker-ui/.env`)
-
-| Variable             | Description                        |
-|----------------------|------------------------------------|
-| `VITE_API_BASE_URL`  | Base URL of the Django API server  |
-
 ---
 
 ## Project Status
@@ -192,11 +156,17 @@ Active development — APIs, database schema, and frontend functionality may cha
 
 ## Notes
 
-- WARNING: API endpoints are currently unauthenticated and should not be exposed publicly. This project is configured for **local development** and internal/self-hosted usage. Before any public or team deployment, you should add proper authentication (e.g. Django token auth or session auth), set `DEBUG = False`, and configure appropriate `ALLOWED_HOSTS`.
+- This repository is provided for viewing and reference purposes only. No permission is granted to use, modify, distribute, deploy, sublicense, or commercially use this project or its source code without explicit written permission from the author.
+- WARNING: API endpoints are currently unauthenticated and should not be exposed publicly. This project is configured for **local development** and internal/self-hosted usage only.
 - Media files (run output uploads) are stored under `experiment_tracker/media/` which is excluded from version control.
 - Database migrations are included and should be applied fresh on a new PostgreSQL instance.
 
 ---
+
+## Contact
+
+- Email: [sreelakshmivijay64@gmail.com](mailto:sreelakshmivijay64@gmail.com)
+- LinkedIn: [sreelakshmi-vijay/](https://www.linkedin.com/in/sreelakshmi-vijay/)
 
 ## License
 
