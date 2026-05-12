@@ -1,4 +1,4 @@
-# Experiment Tracker
+# Modelarium - Experiment Tracker
 
 A full-stack experiment management platform for tracking machine learning experiments, models, runs, and associated assets. Built with Django REST Framework on the backend and standard HTML/CSS on the frontend.
 
