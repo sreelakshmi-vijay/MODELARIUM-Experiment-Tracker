@@ -1,6 +1,6 @@
 # Modelarium - Experiment Tracker
 
-A full-stack experiment management platform for tracking machine learning experiments, models, runs, and associated assets. Built with Django REST Framework on the backend and standard HTML/CSS on the frontend.
+Modelarium is a web-based machine learning experiment tracker built with Django. It gives you one centralised place to organise every experiment you run — from the dataset you used right down to the individual metric values recorded during training. Rather than keeping notes in spreadsheets or relying on memory, Modelarium lets you create a clear, searchable record of every decision you made, every model you tested, and every result you obtained. It is designed for anyone who trains machine learning models — researchers, students, and data scientists alike. No deep technical knowledge is needed to use the interface. 
 
 ---
 
@@ -8,7 +8,7 @@ A full-stack experiment management platform for tracking machine learning experi
 
 This project is currently intended for local development and internal/self-hosted usage. Authentication and production hardening are not yet implemented.
 
-Experiment Tracker provides a structured way to manage the lifecycle of ML experiments — from defining models and setups to logging run metrics, outputs, and observability data. It's designed for local or team-hosted deployments where you want full ownership of your experiment metadata.
+Modelarium provides a structured way to manage the lifecycle of ML experiments — from defining models and setups to logging run metrics, outputs, and observability data. It's designed for local or team-hosted deployments where you want full ownership of your experiment metadata.
 
 **Core concepts:**
 
